@@ -394,3 +394,4 @@ Her adım kendi PR'ı; her PR'da test.
 
 - **2026-09-18:** `PLAN.md` → `docs/PLAN.md`, `CLAUDE.md` → `.claude/CLAUDE.md`, `PREREG.md`/`M1_RESULT.md` → `docs/`. Gerekçe: public repo'da kök dizin temiz kalsın; proje dokümanı ile AI-asistan kuralları ayrışsın.
 - **2026-09-18:** Python 3.12 → **3.13** (`>=3.13,<3.15`), Aim → **MLflow**, evosax ≥0.3. Gerekçe §2.1: Aim'in wheel'leri 3.12'de bitiyordu ve projeyi eski Python'a zincirliyordu.
+- **2026-09-18:** `uv.lock` üretildi (jax 0.11.2, qdax 0.5.0, evosax 0.3.1, mlflow 3.16.1, rerun-sdk 0.38.1); 3.13'te test/lint/mypy/doctor yeşil, QDax güncel JAX ile import oluyor. `[tool.uv] constraint-dependencies` ile `pykdtree>=1.4` (macOS hariç): navis'in macOS'a özel `<=1.3.12` sınırı, wheel'siz sürümü tüm platformlara yayıp Docker'da C derlemesine yol açıyordu (§2.1 kuralı).

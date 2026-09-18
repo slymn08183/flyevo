@@ -14,6 +14,11 @@ from typing import Annotated
 
 import typer
 
+# JAX grabs 75% of GPU memory up front by default; on small or desktop-shared GPUs (e.g. 4 GB
+# under WSL2) that fails with CUDA_ERROR_OUT_OF_MEMORY. Allocate on demand unless the user
+# exported their own value. Must be set before jax is imported.
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
+
 app = typer.Typer(no_args_is_help=True, add_completion=False, help=__doc__)
 data_app = typer.Typer(no_args_is_help=True, help="Connectome data: fetch, cache, checksum.")
 app.add_typer(data_app, name="data")
@@ -39,6 +44,9 @@ def doctor() -> None:
 
         devices = ", ".join(str(d) for d in jax.devices())
         typer.echo(f"jax       backend={jax.default_backend()}  devices=[{devices}]")
+        # listing devices is not enough: run a real op so allocation problems show up here
+        probe = float((jax.numpy.ones((256, 256)) @ jax.numpy.ones((256, 256)))[0, 0])
+        typer.echo(f"jax       compute ok ({probe:.0f})")
     except Exception as exc:  # doctor must report, not crash
         ok = False
         typer.secho(f"jax       FAILED: {exc}", fg="red")

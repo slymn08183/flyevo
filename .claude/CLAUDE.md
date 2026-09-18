@@ -74,7 +74,7 @@ docker compose -f docker/compose.yaml --profile cuda up -d mlflow   # UI at :500
 ## First tasks (in order)
 
 1. ~~Repo skeleton per `docs/PLAN.md` §3, `.python-version` = `3.13`, `pyproject.toml` with `requires-python = ">=3.13,<3.15"` and extras `cuda`, `pretest`, `dev`; Apache-2.0.~~ ✅
-2. ~~`Makefile`, `docker/Dockerfile` (cpu/cuda), `docker/compose.yaml`, `.devcontainer/`, CI.~~ ✅ (written; images not yet built, `uv.lock` not yet generated)
+2. ~~`Makefile`, `docker/Dockerfile` (cpu/cuda), `docker/compose.yaml`, `.devcontainer/`, CI.~~ ✅ (`uv.lock` generated and verified on 3.13/CPU; Docker images not yet built)
 3. `flyevo doctor`, `flyevo data fetch` (hemibrain olfactory subgraph, cached, checksummed).
 4. `viz/rerun_log.py`: neurons in 3D from SWC, save `.rrd`, GIF for README.
 5. `scripts/pretest_shiu.py` (M1).

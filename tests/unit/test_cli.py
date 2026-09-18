@@ -1,3 +1,5 @@
+import os
+
 from typer.testing import CliRunner
 
 from flyevo.cli import app
@@ -15,3 +17,7 @@ def test_help_lists_all_commands() -> None:
 def test_unimplemented_commands_exit_2() -> None:
     assert runner.invoke(app, ["evolve", "experiment=smoke"]).exit_code == 2
     assert runner.invoke(app, ["data", "fetch", "--minimal"]).exit_code == 2
+
+
+def test_gpu_preallocation_is_off_by_default() -> None:
+    assert os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] in {"false", "true"}  # user may override

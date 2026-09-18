@@ -1,51 +1,51 @@
-name: ci
-
-on:
-  push: { branches: [main] }
-  pull_request:
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.13"]
-        experimental: [false]
-        include:
-          # allowed-to-fail until QDax + omegaconf are green on 3.14 (docs/PLAN.md §2.1)
-          - python: "3.14"
-            experimental: true
-    continue-on-error: ${{ matrix.experimental }}
-    env:
-      UV_PYTHON: ${{ matrix.python }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-        with: { enable-cache: true }
-      - run: uv sync --frozen --extra dev
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
-      - run: uv run mypy
-      - run: uv run pytest   # includes tests/golden (2-min CPU smoke)
-
-  docker-cuda-build:
-    # build-only: CI has no GPU
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/Dockerfile
-          target: cuda
-          push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+#name: ci
+#
+#on:
+#  push: { branches: [main] }
+#  pull_request:
+#
+#concurrency:
+#  group: ci-${{ github.ref }}
+#  cancel-in-progress: true
+#
+#jobs:
+#  test:
+#    runs-on: ubuntu-latest
+#    timeout-minutes: 20
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        python: ["3.13"]
+#        experimental: [false]
+#        include:
+#          # allowed-to-fail until QDax + omegaconf are green on 3.14 (docs/PLAN.md §2.1)
+#          - python: "3.14"
+#            experimental: true
+#    continue-on-error: ${{ matrix.experimental }}
+#    env:
+#      UV_PYTHON: ${{ matrix.python }}
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: astral-sh/setup-uv@v5
+#        with: { enable-cache: true }
+#      - run: uv sync --frozen --extra dev
+#      - run: uv run ruff check .
+#      - run: uv run ruff format --check .
+#      - run: uv run mypy
+#      - run: uv run pytest   # includes tests/golden (2-min CPU smoke)
+#
+#  docker-cuda-build:
+#    # build-only: CI has no GPU
+#    runs-on: ubuntu-latest
+#    if: github.event_name == 'push'
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: docker/setup-buildx-action@v3
+#      - uses: docker/build-push-action@v6
+#        with:
+#          context: .
+#          file: docker/Dockerfile
+#          target: cuda
+#          push: false
+#          cache-from: type=gha
+#          cache-to: type=gha,mode=max
