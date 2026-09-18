@@ -1,0 +1,5 @@
+# @package _global_
+# M1: runs via scripts/pretest_shiu.py ([pretest] extra), not `flyevo evolve`
+experiment:
+  name: pretest
+  perturbations: comparative/sechellia_vs_mel.yaml

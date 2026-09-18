@@ -1,0 +1,4 @@
+# @package _global_
+experiment:
+  name: mel_stability
+  seeds: [0, 1, 2, 3, 4]

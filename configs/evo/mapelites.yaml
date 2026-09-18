@@ -1,0 +1,6 @@
+name: mapelites
+algo: MAP_Elites           # QDax
+batch_size: 256
+iterations: 2000
+descriptors: [total_pn_count, total_bouton_count]
+grid_shape: [32, 32]

@@ -1,0 +1,5 @@
+name: hemibrain_olf
+dataset: hemibrain:v1.2.1      # CC BY 4.0
+server: https://neuprint.janelia.org
+cell_classes: [ORN, PN, LN, KC, APL, MBON]
+cache_dir: data/hemibrain

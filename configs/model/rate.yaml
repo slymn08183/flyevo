@@ -1,0 +1,5 @@
+# L1: rate model, runs inside the evolution loop (docs/PLAN.md §1.1)
+name: rate
+n_kc: 2000
+kc_claws: 6               # mean PN inputs per KC
+kc_target_sparsity: 0.05

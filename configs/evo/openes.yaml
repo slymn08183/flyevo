@@ -1,0 +1,5 @@
+name: openes
+algo: Open_ES
+population_size: 1024
+generations: 1000
+sigma_init: 0.1

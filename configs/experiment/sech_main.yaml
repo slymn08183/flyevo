@@ -1,0 +1,6 @@
+# @package _global_
+experiment:
+  name: sech_main
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  start_from: runs/mel_stability/best_genotype.npz   # genotype stabilized in the melanogaster niche
+  compare_to: comparative/sechellia_vs_mel.yaml

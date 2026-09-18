@@ -1,0 +1,5 @@
+name: cmaes
+algo: CMA_ES
+population_size: 128
+generations: 1000
+sigma_init: 0.1

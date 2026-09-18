@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.png binary
+*.gif binary
+*.npz binary
+*.parquet binary
+uv.lock linguist-generated=true

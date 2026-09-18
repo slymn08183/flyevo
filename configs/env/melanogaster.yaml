@@ -1,0 +1,7 @@
+name: melanogaster
+panel: generalist            # env/panels/*.yaml
+niche_weights:
+  noni: 0.0
+  generic_fruit: 2.0
+  toxic: -2.0
+trials_per_life: 200

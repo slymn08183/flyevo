@@ -1,0 +1,24 @@
+defaults:
+  - model: rate
+  - circuit: hemibrain_olf
+  - env: melanogaster
+  - evo: cmaes
+  - fitness: default
+  - experiment: smoke
+  - _self_
+
+seed: 0
+n_dev_draws: 4          # developmental draws averaged per fitness evaluation
+device: auto            # cpu | cuda | auto
+run_dir: runs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${experiment.name}
+log:
+  mlflow: true
+  mlflow_uri: file:runs/mlflow     # or http://mlflow:5000 (compose)
+  rerun: true
+  rerun_every: 10       # 3D snapshot every N generations
+
+hydra:
+  run:
+    dir: ${run_dir}
+  job:
+    chdir: false

@@ -1,0 +1,7 @@
+name: simulans
+panel: generalist
+niche_weights:               # placeholder: refine in M3 before PREREG freeze
+  noni: 0.0
+  generic_fruit: 2.0
+  toxic: -2.0
+trials_per_life: 200

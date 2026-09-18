@@ -1,0 +1,7 @@
+name: sechellia
+panel: noni_specialist       # env/panels/*.yaml
+niche_weights:
+  noni: 3.0
+  generic_fruit: 0.5
+  toxic: -2.0
+trials_per_life: 200

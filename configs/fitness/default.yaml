@@ -1,0 +1,8 @@
+name: default
+proxies:                   # multiple proxies guard against overfitting one (PLAN §1.4)
+  decision_accuracy: 1.0
+  learning_speed: 0.5
+  discrimination: 0.5
+cost:
+  per_pn: 0.01
+  per_bouton: 0.002

@@ -1,0 +1,5 @@
+name: nsga2
+algo: NSGA2                # pymoo
+population_size: 128
+generations: 500
+objectives: [fitness, cost]

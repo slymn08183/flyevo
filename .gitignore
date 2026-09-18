@@ -1,0 +1,42 @@
+# --- data & outputs (never committed; see docs/PLAN.md §7) ---
+/data/
+/runs/
+/outputs/
+/multirun/
+.hydra/
+*.rrd
+mlruns/
+
+# --- python ---
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- notebooks ---
+.ipynb_checkpoints/
+
+# --- secrets ---
+.env
+.env.*
+!.env.example
+
+# --- editor / OS ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# --- Claude Code: local-only state (shared rules in .claude/CLAUDE.md stay tracked) ---
+.claude/settings.local.json
+.claude/worktrees/
+CLAUDE.local.md

@@ -1,0 +1,5 @@
+name: malecns_olf
+dataset: male-cns:v1.0         # CC BY 4.0
+server: https://neuprint.janelia.org
+cell_classes: [ORN, PN, LN, KC, APL, MBON]
+cache_dir: data/malecns

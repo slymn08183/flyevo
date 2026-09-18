@@ -1,0 +1,11 @@
+# @package _global_
+# 2-min CPU run; also the golden test
+experiment:
+  name: smoke
+evo:
+  population_size: 16
+  generations: 20
+n_dev_draws: 2
+log:
+  mlflow: false
+  rerun: false

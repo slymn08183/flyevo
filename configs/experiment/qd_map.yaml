@@ -1,0 +1,5 @@
+# @package _global_
+experiment:
+  name: qd_map
+  start_from: runs/mel_stability/best_genotype.npz
+  compare_to: comparative/sechellia_vs_mel.yaml

@@ -1,0 +1,15 @@
+.git
+.venv
+data
+runs
+notebooks
+docs
+tests
+.claude
+**/__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.hypothesis
+*.rrd
+.env
