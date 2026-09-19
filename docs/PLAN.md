@@ -22,7 +22,7 @@ Kararlar verilmiş, gerekçeleri kısa.
 | Ön test modeli | **Shiu et al. 2024** (Brian2, MIT kod, FlyWire v783) | Tek "tüm beyin" referansı; çekirdek pakete **girmez** |
 | 3D görüntüleme | **Rerun** (`rerun-sdk`) — web viewer | Python'dan log, tarayıcıda izle, zaman çubuğu; remote'ta çalışır |
 | Deney takibi | **MLflow** (Docker içinde, yerel dosya deposu) | Yerel, ücretsiz, aktif (3.16.x, Eyl 2026). **Aim elendi:** son sürüm May 2025, wheel'leri 3.12'de bitiyor — projeyi eski Python'a zincirleyen tek bağımlılık oydu |
-| Konteyner | Docker, iki hedef: `cpu` ve `cuda`; compose profilleri | Windows'ta WSL2 + Docker Desktop; remote'ta aynı imaj |
+| Konteyner | Docker, tek GPU imajı (`python:3.13-slim` + `jax[cuda12]`) | Windows'ta WSL2 + Docker Desktop; remote'ta aynı imaj |
 | Lisans | **Apache-2.0** | Patent hibesi; CC BY veriyle uyumlu |
 | Test | pytest + hypothesis; CI'da 2 dakikalık "golden" evrim koşusu | Regresyon yakalamak için |
 
@@ -39,7 +39,7 @@ Kararlar verilmiş, gerekçeleri kısa.
 | **L0** | Statik graf (neuprint'ten) | Hücre-tipi gruplaması, mimari kısıtlar |
 | **L1** | Rate/lineer-nonlineer model: ORN→PN (divisive normalization) → KC (seyrek rastgele genişletme + APL WTA) → MBON (dopamin kapılı plastisite) | **Evrim döngüsünün içi.** JAX, `vmap` ile popülasyon paralel |
 | **L2** | LIF nokta nöron (JAX, kendi batch'lenmiş implementasyonumuz) | En iyi genotiplerin doğrulaması (M5) |
-| **Shiu** | Tüm beyin LIF, Brian2 | Sadece **ön test** (M1). `scripts/` altında, opsiyonel extra |
+| **Shiu** | Tüm beyin LIF — Shiu 2024 denklemleri, **L2 JAX simülatörüyle** koşar (Brian2 değil: CPU'ya bağlı, GPU sürümü GPL) | **Ön test** (M1) ve B2 bağlam kontrolü. Simülatör çekirdekte ve veriden bağımsız; FlyWire verisi (CC BY-NC) ve yükleyicisi yalnızca `scripts/` altında |
 | **L3+** | Jaxley (biyofiziksel) | Gelecek; plana dahil değil |
 
 L1'in gerekçesi: 2024–2025 karşılaştırmalı connectomics verisinin dersi "yakın türler arasında topoloji değil parametre değişiyor". Parametre-evrimi için rate modeli yeterli ve 1000× ucuz.
@@ -100,6 +100,18 @@ evosax işaret kuralına dikkat: **minimize eder** — fitness'ı negatifle. (`e
 5. **Alternatif çözümler:** QD haritasında eşit-fitness'lı, farklı-mekanizmalı bölgeler var mı? Varsa maliyet/robustluk ekseninde neden elendikleri.
 
 Üç ölçüt düzeyi (parametre / mekanizma / davranış) **baştan** raporlanır; sonuca göre seçilmez.
+
+### 1.7 İleri tahmin (projenin asıl hedefi)
+
+Sechellia deneyi bir **kalibrasyon**dur, son durak değil. Mantık: bilinen bir geçişi (mel → sechellia) evrim operatörü mekanizma düzeyinde yeniden üretiyorsa, aynı operatör **verisi henüz olmayan** bir nişe koşturulur ve çıktı bir tahmin olarak dondurulur.
+
+- **Fitness hiçbir aşamada "hedef türe benzerlik" değildir.** Fitness ekolojiktir (niş + maliyet); gerçek tür verisi yalnızca sınavdır. Aksi döngüsel olur ve ileri tahmini anlamsız kılar.
+- **Kapı:** M3 kalibrasyonu `docs/PREREG.md`'deki ölçütleri geçmeden ileri tahmin koşulmaz. Geçemezse bulgu "operatör yetersiz" olarak raporlanır; tahmin üretilmez.
+- **Ara sınav (varsa veriyle):** sechellia'ya ayarlanmış operatör, ikinci bir bilinen karşılaştırmada (ör. erecta E/I, simulans ≈ değişim yok negatif kontrolü) **yeniden ayar yapılmadan** sınanır. Tek noktaya kalibre edilmiş bir operatörle ileri gitmek zayıf iddiadır.
+- **Hedef nişler:** *D. suzukii* (olgun/taze meyve uzmanı), kaktüs uzmanları (*D. mojavensis*). Her biri yeni bir `configs/env/<tür>.yaml` + koku paneli; kod değişmez.
+- **Çıktı tek bir beyin değildir:** tohumlar üzerinden glomerulus başına ΔPN / Δbouton / ΔE-I **dağılımı**, mekanizma sınıflandırması, tekrarlanabilirlik oranı, QD haritasındaki alternatif çözümler.
+- **Yanlışlanabilirlik:** tahminler `docs/PREDICTIONS.md`'ye yazılır, tarihlenir, git etiketi + DOI (Zenodo/OSF) ile dondurulur — ilgili türün EM/karşılaştırmalı verisi çıkmadan **önce**. Sonradan değiştirilmez; veri gelince aynı §1.6 metrikleriyle puanlanır.
+- **Varsayım (risk):** hedef türün reseptör ayarı melanogaster'a yakın kabul edilir (koku paneli DoOR benzeri mel verisinden). Bilinen reseptör farkları varsa `orn_gain` başlangıcına işlenir, belirtilir.
 
 ---
 
@@ -166,7 +178,7 @@ flyevo/
 ├── .devcontainer/devcontainer.json
 ├── docker/
 │   ├── Dockerfile            # multi-stage: base → cpu → cuda
-│   └── compose.yaml          # profiles: cpu, cuda; services: flyevo, mlflow
+│   └── compose.yaml          # services: flyevo (GPU), mlflow
 ├── configs/                  # Hydra
 │   ├── config.yaml           # defaults listesi
 │   ├── model/{rate.yaml, lif.yaml}
@@ -274,12 +286,12 @@ Her koşu `run_dir`'e yazar: çözümlenmiş config, git SHA, veri checksum'lar�
 
 ## 5. Docker ve remote
 
-`docker/Dockerfile` çok aşamalıdır: `base` (`python:3.13-slim` + uv + proje) → `cpu`; `cuda` hedefi `nvidia/cuda:12.6.0-cudnn-runtime-ubuntu24.04` üzerine uv-managed Python 3.13 ve `--extra cuda` ile kurulur. `docker/compose.yaml` profilleri: `cpu`, `cuda`; servisler: `flyevo-cpu`, `flyevo-cuda`, `mlflow` (UI `:5000`, SQLite backend `runs/mlflow/` altında). Güncel hali için dosyaların kendisine bakın.
+`docker/Dockerfile` tek hedeflidir: `python:3.13-slim` + uv + `--extra cuda`. `nvidia/cuda` tabanı bilerek yok — `jax[cuda12]` wheel'leri CUDA/cuDNN'i kendi getirir, yalnızca host sürücüsü gerekir. `docker/compose.yaml` servisleri: `flyevo` (GPU), `mlflow` (UI `:5000`, SQLite backend `runs/mlflow/` altında). Güncel hali için dosyaların kendisine bakın.
 
 Kullanım:
 ```bash
-docker compose -f docker/compose.yaml --profile cuda up -d mlflow
-docker compose -f docker/compose.yaml --profile cuda run --rm flyevo-cuda evolve experiment=smoke
+docker compose -f docker/compose.yaml up -d mlflow
+docker compose -f docker/compose.yaml run --rm flyevo evolve experiment=smoke
 ```
 
 **Remote GPU (RunPod / Vast / Lambda):**
@@ -326,12 +338,13 @@ Rerun API sürümler arasında değişti (`serve_web` → `serve_grpc` + web vie
 
 | # | Hafta | Çıktı | Kapı |
 |---|---|---|---|
-| **M0 "Hello fly"** | 1 | Repo iskeleti; `make setup/test/lint` yeşil; `docker-cpu` ve `docker-cuda` build; `flyevo doctor` ✓; hemibrain koku alt grafı önbellekte; Rerun'da nöronlar 3D | CI yeşil, GIF README'de |
-| **M1 Ön test** | 2 | `scripts/pretest_shiu.py`: sechellia'nın bilinen değişikliklerini Shiu modeline elle uygula; MBON/davranış çıkışı kayıyor mu? | **Go/No-go.** Kaymıyorsa: L1 modeline geç ama "tüm beyin bağlamı" iddiasından vazgeç; makale "model yeterliliği" makalesine döner |
+| **M0 "Hello fly"** | 1 | Repo iskeleti; `make setup/test/lint` yeşil; GPU Docker imajı build; `flyevo doctor` ✓; hemibrain koku alt grafı önbellekte; Rerun'da nöronlar 3D | CI yeşil, GIF README'de |
+| **M1 Ön test** | 2 | (a) `models/lif.py`: Shiu modelinin veriden bağımsız JAX portu (GPU, event-driven). (b) `scripts/`: FlyWire v783 yükleyici + **port doğrulaması** — Shiu'nun yayınlanmış sonucu (şeker GRN → MN9) yeniden üretilmeli. (c) `viz/rerun_log.py`: tüm beyin 3D nokta bulutu + ateşleme zaman ekseni. (d) `scripts/pretest_shiu.py`: sechellia'nın bilinen değişikliklerini elle uygula; MBON/davranış çıkışı kayıyor mu? | **Go/No-go.** Kaymıyorsa: L1 modeline geç ama "tüm beyin bağlamı" iddiasından vazgeç; makale "model yeterliliği" makalesine döner |
 | **M2 L1 model** | 3–5 | `develop/`, `models/rate.py`, `plasticity.py`; birim + özellik testleri; bilinen nitel sonuçlar: KC seyrekliği ~%5, APL normalizasyonu, tek-deneme öğrenme | Golden test yeşil |
 | **M3 Ana deney** | 5–7 | `env/`, `fitness/`; `mel_stability` (melanogaster nişinde evrim → uzaklaşmamalı); `sech_main` 10 tohum; `neutral` null; mekanizma metrikleri | Ön kayıt tarzı bir `docs/PREREG.md` M3 başında yazılır ve değişmez |
 | **M4 Harita** | 7–9 | QD haritası, NSGA-II Pareto, gradyan karşılaştırması; analiz notebook'u; figürler | — |
 | **M5 Doğrulama + yazı** | 9–12 | En iyi genotiplerin L2 LIF'te doğrulaması; Rerun demo videosu; preprint taslağı | Preprint |
+| **M6 İleri tahmin** | 12+ | §1.7: ara sınav (yeniden ayarsız ikinci karşılaştırma); hedef niş config'leri (*suzukii*, kaktüs uzmanı); 10–30 tohum + null; `docs/PREDICTIONS.md` dondurulur (etiket + DOI) | **Yalnızca M3 kalibrasyonu PREREG ölçütlerini geçtiyse.** Tahmin dondurulduktan sonra değişmez |
 
 M1 **flykit'ten bile önce** — sonucu planı değiştirebilir.
 
@@ -372,6 +385,8 @@ M1 **flykit'ten bile önce** — sonucu planı değiştirebilir.
 | Rerun/evosax API kayması | düşük | sürüm sabitleme; `doctor` sürüm kontrolü |
 | 3.14'te QDax/omegaconf kırılması | orta | `<3.15` üst sınırı; 3.14 CI'da izinli-başarısız; yeşile dönünce varsayılanı yükselt |
 | MLflow/SQLite tek kullanıcı kilidi (paralel tohumlar) | düşük | Tohumlar ayrı run olarak yazar; çakışırsa `file:` store yerine compose'daki server'a geç |
+| Tek noktaya kalibrasyon (yalnızca sechellia) ileri tahmini zayıflatır | yüksek | §1.7 ara sınav: ikinci bilinen karşılaştırma yeniden ayarsız; negatif kontrol (simulans); iddia "dağılım + mekanizma" ile sınırlı |
+| Hedef türün reseptör ayarı bilinmiyor | orta | Mel paneli varsayımı açıkça yazılır; bilinen farklar `orn_gain`'e işlenir; duyarlılık analizi |
 | Windows/WSL2 GPU sorunları | orta | İlk gün `nvidia-smi` WSL'de doğrulanır; olmazsa remote'a geç, yerelde CPU |
 | Hesap | düşük | A/B2 senaryoları: $0–400 |
 
@@ -395,3 +410,9 @@ Her adım kendi PR'ı; her PR'da test.
 - **2026-09-18:** `PLAN.md` → `docs/PLAN.md`, `CLAUDE.md` → `.claude/CLAUDE.md`, `PREREG.md`/`M1_RESULT.md` → `docs/`. Gerekçe: public repo'da kök dizin temiz kalsın; proje dokümanı ile AI-asistan kuralları ayrışsın.
 - **2026-09-18:** Python 3.12 → **3.13** (`>=3.13,<3.15`), Aim → **MLflow**, evosax ≥0.3. Gerekçe §2.1: Aim'in wheel'leri 3.12'de bitiyordu ve projeyi eski Python'a zincirliyordu.
 - **2026-09-18:** `uv.lock` üretildi (jax 0.11.2, qdax 0.5.0, evosax 0.3.1, mlflow 3.16.1, rerun-sdk 0.38.1); 3.13'te test/lint/mypy/doctor yeşil, QDax güncel JAX ile import oluyor. `[tool.uv] constraint-dependencies` ile `pykdtree>=1.4` (macOS hariç): navis'in macOS'a özel `<=1.3.12` sınırı, wheel'siz sürümü tüm platformlara yayıp Docker'da C derlemesine yol açıyordu (§2.1 kuralı).
+- **2026-09-18:** CPU Docker hedefi ve compose profilleri kaldırıldı; tek GPU imajı, ince taban. Ayrı WSL Ubuntu distro'su gereksiz bulundu ve kaldırıldı (Docker Desktop GPU'yu kendi WSL2 backend'iyle geçiriyor). CI şimdilik devre dışı (pipeline yok). Gerekçe: koşular yalnızca GPU'da yapılacak, disk kısıtlı.
+- **2026-09-18:** **M6 İleri tahmin** eklendi (§1.7). Sechellia deneyi kalibrasyon olarak yeniden çerçevelendi; asıl hedef, kalibre edilmiş operatörü verisi olmayan nişlere koşturup tarihli, dondurulmuş, yanlışlanabilir tahmin üretmek.
+- **2026-09-18:** M1 yeniden tanımlandı: Brian2 yerine Shiu modelinin JAX portu (`models/lif.py`, L2 ile aynı kod), önüne port-doğrulama adımı, ardından tüm-beyin 3D sahne. Tüm-beyin için MaleCNS'e geçiş **yapılmıyor**: ek nöronlar (VNC, erkeğe özgü devreler) koku sorusuna katkı sağlamıyor; tek kazanç lisans, o da tüm beyin yalnızca `scripts/` içinde kullanıldığı sürece fark yaratmıyor. MaleCNS koku alt devresi için ikinci örnek rolünde kalır.
+- **2026-09-19:** `models/lif.py` tüm-beyin ölçeğinde GTX 1650'de ölçüldü (sentetik ağ: 138 bin nöron, 15M bağlantı, ~200 aktif nöron): yoğun tarama ~150 s / biyolojik saniye → event-driven ~23 s. 30 denemelik 1 s'lik bir Shiu deneyi ≈ 12 dk. Gerçek beyinde aktivite daha yüksek olabilir; ayar düğmesi `edge_budget` / `max_spikes_per_step`. `XLA_PYTHON_CLIENT_PREALLOCATE=false` Dockerfile'a `ENV` olarak da kondu (CLI'dan geçmeyen script'ler 4 GB kartta OOM ile çöküyordu).
+- **2026-09-19:** Port doğrulaması, kaba düzey: FlyWire v783 üzerinde Shiu'nun örnek deneyi (20 şeker GRN'i @150 Hz, 30 × 1 s) → **423 aktif nöron, 467.570 spike, MN9 96 ± 6 Hz**; uyarılan GRN'ler ortalama 147,8 Hz. Referans notebook (v630 verisi) "~400 aktif nöron, >400 bin spike" diyor → uyumlu. GTX 1650'de 30 deneme 605 s (deneme başına ~20 s). Nöron-nöron karşılaştırma (referans `sugarR.parquet` ile) henüz yapılmadı.
+- **2026-09-19:** Port doğrulaması, nöron düzeyi (referans: Shiu reposundaki hazır sonuç dosyaları, v630 verisi; bizimki v783). 100 Hz: uyarılan GRN'ler 99,0 ↔ 99,3 Hz, aktif nöron 404 ↔ 406, MN9 67,0 ↔ 70,5 Hz, iki tarafta da aktif 340 nöronda r = 0,95. Bizde toplam spike ~%13 fazla — connectome sürüm farkıyla tutarlı ama kanıtlanmadı; birebir karşılaştırma v630 bağlantı dosyasını (86,6 MB) gerektirir. Not: repodaki `sugarR.parquet` notebook'taki 150 Hz ile değil ~200 Hz ile üretilmiş görünüyor (GRN'ler ~197 Hz). Tüm-beyin 3D sahne (`viz.rrd`) ve GIF üretildi; aktivite SEZ'de toplanıyor.

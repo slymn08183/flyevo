@@ -1,0 +1,16 @@
+# Look of the whole-brain activity views (src/flyevo/viz). Positions are in micrometres.
+name: brain
+rate_vmax_hz: 200.0     # colour scale saturates here
+cmap: inferno
+rerun:
+  point_radius: 0.9     # resting neurons
+  active_radius: 3.0    # spiking neurons
+  rate_smooth_ms: 50.0  # moving average of the rate traces
+  # initial camera: FlyWire space has x = lateral, y = ventral, z = posterior → frontal view
+  view_axis: [0.0, 0.0, 1.0]
+  view_up: [0.0, -1.0, 0.0]
+gif:
+  fps: 15
+  decay: 0.8            # fading trail per frame
+  density_bins: 220
+  dpi: 80

@@ -6,7 +6,7 @@ In-silico evolution of the Drosophila olfactory circuit (AL → MB → MBON) und
 
 ## Stack (do not swap without discussion)
 
-Python 3.13 (`requires-python = ">=3.13,<3.15"`) · uv · JAX · evosax (≥0.3) · QDax (≥0.5) · pymoo · neuprint-python · navis · hydra-core · typer · rerun-sdk · mlflow · pytest · hypothesis · ruff · mypy · Docker (targets `cpu`, `cuda`).
+Python 3.13 (`requires-python = ">=3.13,<3.15"`) · uv · JAX · evosax (≥0.3) · QDax (≥0.5) · pymoo · neuprint-python · navis · hydra-core · typer · rerun-sdk · mlflow · pytest · hypothesis · ruff · mypy · Docker (single GPU image).
 
 Python version rule: the pin is "newest CPython for which every core dependency ships binary wheels" (matrix in `docs/PLAN.md` §2.1). Do not bump or lower it without re-checking that matrix; never accept a source build of a C/Cython dependency inside Docker to reach a newer interpreter. 3.14 runs in CI as allowed-to-fail; when it is green for QDax and omegaconf, bump the default. Aim was removed on purpose (no wheels past 3.12, stale since May 2025) — do not reintroduce it.
 
@@ -16,15 +16,15 @@ Python version rule: the pin is "newest CPython for which every core dependency 
 make setup            # uv sync --all-extras + pre-commit install + minimal data fetch
 make test             # pytest (unit + property + golden)
 make lint             # ruff + mypy
-make docker-cpu       # build cpu image
-make docker-cuda      # build cuda image (WSL2 + NVIDIA toolkit required)
+make docker           # build the GPU image (Docker Desktop + NVIDIA driver)
 uv run flyevo doctor  # env health: JAX backend, GPU, data checksums, versions
 uv run flyevo data fetch
 uv run flyevo evolve experiment=smoke                    # 2-min CPU run
 uv run flyevo evolve experiment=sech_main env=sechellia evo=cmaes seed=0
 uv run flyevo analyze runs/<run>/
 uv run flyevo viz runs/<run>/ --serve                    # Rerun web viewer
-docker compose -f docker/compose.yaml --profile cuda up -d mlflow   # UI at :5000
+docker compose -f docker/compose.yaml up -d mlflow   # UI at :5000
+docker compose -f docker/compose.yaml run --rm flyevo evolve experiment=smoke   # GPU run
 ```
 
 ## Repo conventions
@@ -51,6 +51,8 @@ docker compose -f docker/compose.yaml --profile cuda up -d mlflow   # UI at :500
 
 * M1 pre-test is a go/no-go (`scripts/pretest_shiu.py`). Do not start M3 before its result is recorded in `docs/M1_RESULT.md`.
 * Before M3, write `docs/PREREG.md` (hypotheses, metrics, null model, seeds, stopping rule). It is frozen after that; changes go in a dated "Deviations" section.
+* M6 forward prediction (`docs/PLAN.md` §1.7) runs only if the M3 calibration passes the PREREG criteria. Predictions go to `docs/PREDICTIONS.md`, are dated, tagged and frozen before the target species' data exists; never edit them afterwards.
+* Fitness is always ecological (niche + cost). Never use similarity to a real species' data as fitness — that data is the held-out exam.
 * Golden test (`tests/golden/`) must stay green; tolerance changes require a note in the PR.
 
 ## Testing
@@ -58,13 +60,15 @@ docker compose -f docker/compose.yaml --profile cuda up -d mlflow   # UI at :500
 * Unit: generator determinism, KC sparsity bounds, divisive normalization scale invariance, plasticity sign.
 * Property (hypothesis): any in-bounds genotype → valid phenotype, finite fitness.
 * Golden: `experiment=smoke` on CPU < 2 min → reference metrics ± tolerance.
-* CI is CPU-only; Python matrix 3.13 (required) + 3.14 (`continue-on-error`); the CUDA image is build-only in CI.
+* CI is currently disabled (`.github/workflows/ci.yml` is commented out by the user; no pipeline yet). Tests run locally with `make test`.
 
-## Windows / WSL2
+## Windows / GPU
 
-* Everything runs in WSL2 (Ubuntu) or in Docker. JAX-CUDA is Linux-only; never attempt it on native Windows.
-* Keep the repo on the WSL2 filesystem (`~/…`), not `/mnt/c/…`.
-* `nvidia-smi` must work inside WSL2 before `make docker-cuda`.
+* Real runs happen on the GPU through the Docker image (`make docker`). Docker Desktop's own WSL2 backend passes the GPU through; **no separate Ubuntu distro is needed** (it was removed on purpose to save disk — do not ask for it again).
+* The Windows `.venv` is CPU-only and is for tests/lint/quick checks. JAX-CUDA is Linux-only; never attempt it on native Windows.
+* There is no CPU Docker image (removed on purpose). The image uses `python:3.13-slim`, not `nvidia/cuda`: the `jax[cuda12]` wheels bring their own CUDA libs.
+* The GPU is a 4 GB GTX 1650 shared with the desktop: `XLA_PYTHON_CLIENT_PREALLOCATE=false` is mandatory (set in `cli.py` **and** as `ENV` in the Dockerfile, because `scripts/` and `python -c` bypass the CLI). Without it JAX dies with `CUDA_ERROR_OUT_OF_MEMORY` on the first large transfer — that, not leaked memory, was the cause of the 2026-09-18 crashes. Mind memory in batch sizes.
+* Disk is limited: do not download or build multi-GB things without saying the size first.
 
 ## Do / Don't
 
@@ -74,7 +78,9 @@ docker compose -f docker/compose.yaml --profile cuda up -d mlflow   # UI at :500
 ## First tasks (in order)
 
 1. ~~Repo skeleton per `docs/PLAN.md` §3, `.python-version` = `3.13`, `pyproject.toml` with `requires-python = ">=3.13,<3.15"` and extras `cuda`, `pretest`, `dev`; Apache-2.0.~~ ✅
-2. ~~`Makefile`, `docker/Dockerfile` (cpu/cuda), `docker/compose.yaml`, `.devcontainer/`, CI.~~ ✅ (`uv.lock` generated and verified on 3.13/CPU; Docker images not yet built)
-3. `flyevo doctor`, `flyevo data fetch` (hemibrain olfactory subgraph, cached, checksummed).
-4. `viz/rerun_log.py`: neurons in 3D from SWC, save `.rrd`, GIF for README.
-5. `scripts/pretest_shiu.py` (M1).
+2. ~~`Makefile`, `docker/Dockerfile` (GPU), `docker/compose.yaml`, `.devcontainer/`.~~ ✅ (`uv.lock` generated and verified on 3.13)
+3. ~~`models/lif.py`: JAX port of the Shiu 2024 whole-brain LIF (event-driven, exact dense fallback), unit-tested.~~ ✅ Measured on the GTX 1650 with a synthetic whole-brain-sized net (138k neurons, 15M edges, ~200 active): ~23 s per biological second (dense version: ~150 s). Budgets in `configs/model/lif.yaml` are the tuning knob.
+4. `scripts/`: FlyWire v783 loader (`flywire_io.py`) + experiment runner (`flywire_experiment.py`, YAML in `configs/pretest/`). ✅ Sugar-GRN experiment runs on the GPU (30 trials ≈ 10 min): 423 active neurons, 467,570 spikes, MN9 96 ± 6 Hz — matches the reference notebook's coarse description (~400 active, >400k spikes; v630 data). Per-neuron check against the reference result files (v630 data, ours v783): at 100 Hz — stimulated GRNs 99.0 vs 99.3 Hz, active neurons 404 vs 406, MN9 67.0 vs 70.5 Hz, r = 0.95 over neurons active in both; ours has ~13% more spikes overall, consistent with (but not proven to be) the connectome version difference. The shipped `sugarR.parquet` was evidently generated at 200 Hz, not the notebook's 150 Hz (its GRNs fire at ~197 Hz). An exact same-data comparison would need the v630 connectivity file (86.6 MB). FlyWire stays out of `src/flyevo/`.
+5. ~~`viz/rerun_log.py` (3D point cloud + spikes on `sim_time`, `.rrd`) and `viz/figures.py` (GIF); look in `configs/viz/brain.yaml`; FlyWire positions via `scripts/flywire_viz.py`.~~ ✅ Verified in the Rerun web viewer. GIF for the README still to be shrunk (< 5 MB) and added.
+6. `scripts/pretest_shiu.py` (M1 go/no-go).
+7. `flyevo data fetch` (hemibrain olfactory subgraph, cached, checksummed) → M2.
