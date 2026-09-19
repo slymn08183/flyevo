@@ -10,7 +10,7 @@ We evolve developmental parameters of the *D. melanogaster* olfactory pathway (a
 
 ## Quick start
 
-Linux / WSL2 / devcontainer (native Windows is CPU-only and unsupported for CUDA):
+Local venv (tests, lint, small checks — native Windows is CPU-only); real runs go through the GPU Docker image:
 
 ```bash
 make setup                                # uv sync + pre-commit + minimal data
@@ -20,8 +20,8 @@ uv run flyevo analyze runs/<run>/
 uv run flyevo viz runs/<run>/ --serve     # Rerun web viewer
 ```
 
-Docker: `make docker-cpu` or `make docker-cuda` (needs NVIDIA Container Toolkit), then
-`docker compose -f docker/compose.yaml --profile cuda run --rm flyevo-cuda evolve experiment=smoke`.
+GPU: `make docker` (Docker Desktop + NVIDIA driver; no separate WSL distro needed), then
+`docker compose -f docker/compose.yaml run --rm flyevo evolve experiment=smoke`.
 
 A free [neuPrint](https://neuprint.janelia.org) token is required for data fetch — copy `.env.example` to `.env`.
 
@@ -42,7 +42,7 @@ src/flyevo/     the package — source of truth
 configs/        Hydra config groups — every experiment is CLI + config
 tests/          unit · property (hypothesis) · golden (2-min smoke evolution)
 scripts/        standalone scripts (M1 pre-test; optional [pretest] extra)
-docker/         Dockerfile (cpu / cuda targets) + compose
+docker/         Dockerfile (single GPU image) + compose
 docs/           plan, pre-registration, milestone results
 notebooks/      exploration only — never the source of a result
 ```

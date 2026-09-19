@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 COMPOSE := docker compose -f docker/compose.yaml
 
-.PHONY: help setup test lint format data evolve viz docker-cpu docker-cuda mlflow clean
+.PHONY: help setup test lint format data evolve viz docker mlflow clean
 
 help:  ## list targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-14s %s\n", $$1, $$2}'
@@ -32,11 +32,8 @@ evolve:  ## 2-min CPU smoke run
 viz:  ## serve latest run in the Rerun web viewer (RUN=runs/<...>)
 	uv run flyevo viz $(RUN) --serve
 
-docker-cpu:  ## build cpu image
-	$(COMPOSE) --profile cpu build flyevo-cpu
-
-docker-cuda:  ## build cuda image (WSL2 + NVIDIA toolkit required)
-	$(COMPOSE) --profile cuda build flyevo-cuda
+docker:  ## build the GPU image (Docker Desktop + NVIDIA driver)
+	$(COMPOSE) build flyevo
 
 mlflow:  ## start the MLflow UI on :5000
 	$(COMPOSE) up -d mlflow

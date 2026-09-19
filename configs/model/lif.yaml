@@ -1,3 +1,18 @@
-# L2: batched LIF point neurons, validation of best genotypes only (M5)
+# L2: whole-brain LIF point neurons (src/flyevo/models/lif.py).
+# Values are the defaults of Shiu et al. 2024, doi:10.1038/s41586-024-07763-9
+# (github.com/philshiu/Drosophila_brain_model, model.py `default_params`). Units: ms, mV.
 name: lif
-dt_ms: 0.1
+dt: 0.1
+v_rest: -52.0
+v_reset: -52.0
+v_thresh: -45.0
+tau_m: 20.0
+tau_syn: 5.0
+t_refrac: 2.2
+t_delay: 1.8
+w_syn: 0.275                  # mV per synapse
+poisson_weight_factor: 250.0  # a Poisson event adds w_syn * factor to v
+# Speed only, never results: budgets of the event-driven spike propagation. A step that exceeds
+# them falls back to an exact dense pass over all edges.
+max_spikes_per_step: 1024
+edge_budget: 262144
