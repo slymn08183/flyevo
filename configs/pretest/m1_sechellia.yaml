@@ -1,0 +1,41 @@
+# M1 go/no-go: is the whole-brain LIF model sensitive to the kind of change evolution really made?
+#
+# We edit the melanogaster (FlyWire) brain by hand into a "sechellia-fied" one, using the measured
+# PN→KC differences in src/flyevo/data/comparative/sechellia_vs_mel.yaml, then present the same
+# "odours" to both brains and compare the mushroom-body response.
+name: m1_sechellia
+model: configs/model/lif.yaml
+data:
+  connectivity: data/flywire/Connectivity_783.parquet
+  completeness: data/flywire/Completeness_783.csv
+  annotations: data/flywire/neuron_annotations.tsv
+comparative: src/flyevo/data/comparative/sechellia_vs_mel.yaml
+
+seed: 0
+n_trials: 5                # paired trials (same random keys in both brains); ~25 s each on the GTX 1650
+t_run_ms: 1000
+bin_ms: 10
+rate_hz: 100              # an "odour" = all ORNs of one glomerulus driven at this rate
+early_ms: 100             # exploratory only: Kenyon cells that spike within this window
+
+odors:                    # glomerulus names; ORN cell type is ORN_<name>
+  changed: [DL2d, DP1l, DC3, VM5v]
+  control: [DM2, DA1, VA2]          # DM2 is reported unchanged in the mushroom body
+
+perturbation:
+  # bouton_gain: each PN of the glomerulus gets new PN→KC connections (random KCs of the same
+  #   hemisphere, weights resampled from its existing ones) until its number of KC partners is
+  #   multiplied by sechellia/melanogaster kc_connection_pct.
+  # pn_loss: PNs of the type are removed (all their output) until `pn_target_per_side` remain.
+  pn_target_per_side: 2
+  active_hz: 1.0          # a Kenyon cell counts as responding above this rate
+
+# Decision rule, written before the first run (docs/PLAN.md §8, M1):
+#   For each *changed* odour the number of responding Kenyon cells must move in the measured
+#   direction, by more than trial-to-trial noise (|Cohen's d| >= effect_size_min), and the MBON
+#   output must move too (same threshold on the MBON population shift).
+#   For each *control* odour the Kenyon-cell response must stay within noise (|d| < effect_size_min).
+#   GO = at least `min_changed_pass` of the 4 changed odours pass AND all controls stay put.
+criteria:
+  effect_size_min: 1.0
+  min_changed_pass: 3

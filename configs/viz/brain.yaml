@@ -3,12 +3,46 @@ name: brain
 rate_vmax_hz: 200.0     # colour scale saturates here
 cmap: inferno
 rerun:
-  point_radius: 0.9     # resting neurons
-  active_radius: 3.0    # spiking neurons
+  point_radius: 0.5     # one faint dot per resting neuron
+  active_radius: 2.2    # bright dot on a neuron while it fires
+  skeleton_radius: 0.35 # thickness of the real neuron shapes
+  skeleton_decay: 0.75  # a spike's colour fades by this factor per time bin
+  skeleton_keep_every: 3    # draw every n-th skeleton point (file size vs smoothness)
+  skeleton_min_twig_um: 3.0 # drop end twigs shorter than this (mesh-skeleton fuzz, not biology)
+  skeleton_min_rate_hz: 1.0 # neurons firing at least this much in the trial get their real shape
   rate_smooth_ms: 50.0  # moving average of the rate traces
-  # initial camera: FlyWire space has x = lateral, y = ventral, z = posterior → frontal view
+  # initial camera: FlyWire space has x = left-right, y = dorsal→ventral, z = front→back
   view_axis: [0.0, 0.0, 1.0]
   view_up: [0.0, -1.0, 0.0]
+  guide_um: 100.0       # length of the scale bar and of the direction arrows
+
+# Brain-region surfaces ("neuropils"). A mesh belongs to the first group whose prefix matches.
+# Labels say what the region does, in the order information flows for smell and taste.
+regions:
+  enabled: true
+  alpha: 10             # 0-255, how see-through the surfaces are (higher hides the neurons)
+  other_rgb: [125, 130, 145]
+  groups:
+    antennal_lobe:
+      prefixes: [AL_]
+      rgb: [80, 200, 120]
+      label: "antennal lobe: smell comes in (the glomeruli are here)"
+    mushroom_body:
+      prefixes: [MB_]
+      rgb: [245, 170, 50]
+      label: "mushroom body: odour memory (Kenyon cells)"
+    lateral_horn:
+      prefixes: [LH_]
+      rgb: [200, 110, 225]
+      label: "lateral horn: innate smell reactions"
+    taste_feeding:
+      prefixes: [GNG, PRW, SAD]
+      rgb: [235, 90, 90]
+      label: "GNG / SEZ: taste in, feeding commands out"
+    optic_lobe:
+      prefixes: [ME_, LO_, LOP_, LA_, AME_]
+      rgb: [70, 120, 210]
+      label: "optic lobe: vision"
 gif:
   fps: 15
   decay: 0.8            # fading trail per frame

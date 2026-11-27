@@ -1,0 +1,55 @@
+# Known differences between D. sechellia and D. melanogaster in the projection-neuron →
+# Kenyon-cell (PN → KC) layer of the mushroom body. Derived by hand from the text and Table 1 of:
+#
+#   Ellis KE, et al. "Evolution of connectivity architecture in the Drosophila mushroom body."
+#   Nature Communications 15, 4872 (2024). doi:10.1038/s41467-024-48839-4   (CC BY 4.0)
+#
+# Modified: numbers copied, ratios computed here. Direction of every ratio is sechellia / melanogaster.
+# kc_connection_pct = share of all PN→KC connections that come from this glomerulus (their
+# photo-labelling of 200 Kenyon cells per species). bouton_volume_um3 = mean ± sd.
+# The paper's summary: increases happen through more boutons per neuron, decreases through
+# fewer projection neurons.
+source_doi: 10.1038/s41467-024-48839-4
+glomeruli:
+  DL2d:
+    receptor: Ir75b            # hexanoic acid — a noni fruit odour
+    direction: up
+    mechanism: bouton_gain
+    kc_connection_pct: { melanogaster: 1.02, simulans: 0.68, sechellia: 3.19 }
+    pn_count: { melanogaster: 6, simulans: 6, sechellia: 8 }   # 5 ad + 1 v → 5 ad + 3 v
+    bouton_volume_um3:          # all adDL2d neurons
+      melanogaster: [112.18, 12.41]
+      simulans: [104.44, 25.93]
+      sechellia: [348.29, 186.63]
+  DP1l:
+    receptor: Ir75a            # acids
+    direction: up
+    mechanism: bouton_gain
+    kc_connection_pct: { melanogaster: 0.44, simulans: 0.95, sechellia: 3.19 }
+    pn_count: { melanogaster: 2, simulans: 3, sechellia: 3 }
+    bouton_volume_um3:          # the lDP1l neuron
+      melanogaster: [244.39, 69.00]
+      simulans: [232.41, 100.73]
+      sechellia: [388.91, 75.88]
+  DC3:
+    receptor: Or83c            # farnesol — yeast / citrus
+    direction: down
+    mechanism: pn_loss
+    kc_connection_pct: { melanogaster: 4.50, simulans: 4.91, sechellia: 1.37 }
+    pn_count: { melanogaster: 3, simulans: 6, sechellia: 2 }   # adPNs: 3 → 2
+    bouton_volume_um3:          # all adDC3 neurons together (per neuron it is unchanged)
+      melanogaster: [370.15, 195.68]
+      simulans: [364.06, 146.60]
+      sechellia: [233.02, 83.80]
+  VM5v:
+    receptor: Or98a            # alcohols / esters of fermenting fruit
+    direction: down
+    mechanism: pn_loss
+    kc_connection_pct: { melanogaster: 3.36, simulans: 5.05, sechellia: 1.82 }
+    pn_count: { melanogaster: 3, simulans: 3, sechellia: 2 }   # adPNs: 3 → 2
+    bouton_volume_um3:
+      melanogaster: [256.78, 104.09]
+      simulans: [268.43, 132.67]
+      sechellia: [140.14, 77.76]
+# Reported as NOT noticeably different in the mushroom body (useful as negative controls):
+unchanged_in_mb: [DM2, DA2, DP1m]
