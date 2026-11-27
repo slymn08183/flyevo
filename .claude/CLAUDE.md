@@ -60,7 +60,7 @@ docker compose -f docker/compose.yaml run --rm flyevo evolve experiment=smoke   
 * Unit: generator determinism, KC sparsity bounds, divisive normalization scale invariance, plasticity sign.
 * Property (hypothesis): any in-bounds genotype → valid phenotype, finite fitness.
 * Golden: `experiment=smoke` on CPU < 2 min → reference metrics ± tolerance.
-* CI is currently disabled (`.github/workflows/ci.yml` is commented out; no pipeline yet). Tests run locally with `make test`.
+* There is no CI (the workflow was removed on purpose). Tests run locally with `make test`.
 
 ## Working style
 
